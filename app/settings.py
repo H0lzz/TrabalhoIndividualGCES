@@ -1,6 +1,7 @@
 from datetime import timedelta
 import os
 import environ
+import dj_database_url
 
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -98,7 +99,10 @@ WSGI_APPLICATION = "app.wsgi.application"
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 
 DATABASES = {
-    "default": env.db(),
+    'default': dj_database_url.config(
+        default=os.getenv("DATABASE_URL", "sqlite:///db.db"),
+        conn_max_age=600
+    )
 }
 
 # Password validation

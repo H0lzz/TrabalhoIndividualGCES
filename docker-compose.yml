@@ -1,0 +1,53 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/app
+    environment:
+      SECRET_KEY: 1111
+      ON_SERVER: off
+      LOGGING_LEVEL: INFO
+      DATABASE_URL: postgres://postgres:postgres@db:5432/postgres
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    volumes:
+      - ./www:/app
+      - /app/node_modules
+    ports:
+      - "4000:4000"
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+
+volumes:
+  postgres_data:
